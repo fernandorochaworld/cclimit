@@ -1,6 +1,6 @@
 # claude-code-usage-limit
 
-A small Node.js script that reports your current **Claude Code** subscription
+A small TypeScript CLI that reports your current **Claude Code** subscription
 usage limits — the same 5-hour and 7-day rate-limit windows shown by Claude
 Code's built-in `/usage` command.
 
@@ -22,10 +22,24 @@ No credentials are stored or transmitted anywhere except to Anthropic's API.
 ## Usage
 
 ```sh
-node index.js          # pretty output
-node index.js --json   # raw JSON from the API
-npm start              # same as: node index.js
+npm install            # install dev dependencies (TypeScript)
+npm run build          # compile src/ → dist/
+npm start              # pretty output
+node dist/cli.js --json  # raw JSON from the API
+npm run dev            # build + run in one step
 ```
+
+## Architecture
+
+The project follows a hexagonal layout under `src/`:
+
+- `core/` — domain types, ports (interfaces) and the `UsageApp` use case.
+  Contains no I/O.
+- `adapters/` — driven adapters that implement the ports: reading
+  credentials from the Keychain/file and fetching usage from the API.
+- `presentation/` — driving adapters that render output (`PrettyRenderer`,
+  `JsonRenderer`).
+- `cli.ts` — the composition root: wires adapters into `UsageApp`.
 
 Example output:
 
