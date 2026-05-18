@@ -1,0 +1,17 @@
+{
+  "name": "claude-code-usage-limit",
+  "version": "1.0.0",
+  "description": "Show your current Claude Code subscription usage limits",
+  "type": "module",
+  "main": "index.js",
+  "bin": {
+    "claude-usage": "index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "license": "MIT"
+}
