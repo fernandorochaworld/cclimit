@@ -1,4 +1,4 @@
-# claude-code-usage-limit
+# ailimits
 
 A small TypeScript CLI that reports your current **Claude Code** subscription
 usage limits — the same 5-hour and 7-day rate-limit windows shown by Claude
@@ -22,10 +22,10 @@ No credentials are stored or transmitted anywhere except to Anthropic's API.
 ## Use as a CLI
 
 ```sh
-npx claude-code-usage-limit          # one-off, no install
-npx claude-code-usage-limit --json   # raw JSON from the API
+npx ailimits          # one-off, no install
+npx ailimits --json   # raw JSON from the API
 
-npm install -g claude-code-usage-limit   # or install the `ailimits` command
+npm install -g ailimits   # or install the `ailimits` command
 ailimits
 ailimits --json
 ```
@@ -33,11 +33,11 @@ ailimits --json
 ## Use as a dependency
 
 ```sh
-npm install claude-code-usage-limit
+npm install ailimits
 ```
 
 ```ts
-import { getUsage } from 'claude-code-usage-limit';
+import { getUsage } from 'ailimits';
 
 // Convenience: read local credentials and return the raw usage payload.
 const usage = await getUsage();
@@ -51,7 +51,7 @@ import {
   KeychainCredentialsProvider,
   AnthropicUsageProvider,
   PrettyRenderer,
-} from 'claude-code-usage-limit';
+} from 'ailimits';
 
 await new UsageApp(
   new KeychainCredentialsProvider(),
