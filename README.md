@@ -25,9 +25,9 @@ No credentials are stored or transmitted anywhere except to Anthropic's API.
 npx claude-code-usage-limit          # one-off, no install
 npx claude-code-usage-limit --json   # raw JSON from the API
 
-npm install -g claude-code-usage-limit   # or install the `claude-usage` command
-claude-usage
-claude-usage --json
+npm install -g claude-code-usage-limit   # or install the `ailimits` command
+ailimits
+ailimits --json
 ```
 
 ## Use as a dependency

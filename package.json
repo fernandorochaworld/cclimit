@@ -1,6 +1,6 @@
 {
-  "name": "claude-code-usage-limit",
-  "version": "2.0.0",
+  "name": "ailimits",
+  "version": "0.1.0",
   "description": "Show your current Claude Code subscription usage limits",
   "type": "module",
   "main": "./dist/index.js",
@@ -13,7 +13,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "claude-usage": "./dist/cli.js"
+    "ailimits": "./dist/cli.js"
   },
   "sideEffects": [
     "./dist/cli.js"
