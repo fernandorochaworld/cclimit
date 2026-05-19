@@ -19,13 +19,57 @@ No credentials are stored or transmitted anywhere except to Anthropic's API.
 - Node.js 20+ (uses the built-in `fetch`)
 - Claude Code installed and logged in (run `claude` once)
 
-## Usage
+## Use as a CLI
+
+```sh
+npx claude-code-usage-limit          # one-off, no install
+npx claude-code-usage-limit --json   # raw JSON from the API
+
+npm install -g claude-code-usage-limit   # or install the `claude-usage` command
+claude-usage
+claude-usage --json
+```
+
+## Use as a dependency
+
+```sh
+npm install claude-code-usage-limit
+```
+
+```ts
+import { getUsage } from 'claude-code-usage-limit';
+
+// Convenience: read local credentials and return the raw usage payload.
+const usage = await getUsage();
+console.log(usage.five_hour?.utilization);
+```
+
+```ts
+// Or compose the building blocks yourself (e.g. a custom renderer).
+import {
+  UsageApp,
+  KeychainCredentialsProvider,
+  AnthropicUsageProvider,
+  PrettyRenderer,
+} from 'claude-code-usage-limit';
+
+await new UsageApp(
+  new KeychainCredentialsProvider(),
+  new AnthropicUsageProvider(),
+  new PrettyRenderer(),
+).run();
+```
+
+Importing the package is side-effect-free — nothing runs until you call it,
+and the library throws on error instead of calling `process.exit`. The tool
+only works where Claude Code credentials exist locally (e.g. a dev machine).
+
+## Local development
 
 ```sh
 npm install            # install dev dependencies (TypeScript)
 npm run build          # compile src/ → dist/
 npm start              # pretty output
-node dist/cli.js --json  # raw JSON from the API
 npm run dev            # build + run in one step
 ```
 
@@ -39,7 +83,10 @@ The project follows a hexagonal layout under `src/`:
   credentials from the Keychain/file and fetching usage from the API.
 - `presentation/` — driving adapters that render output (`PrettyRenderer`,
   `JsonRenderer`).
-- `cli.ts` — the composition root: wires adapters into `UsageApp`.
+- `index.ts` — the library entry point: side-effect-free re-exports plus the
+  `getUsage()` convenience function.
+- `cli.ts` — the CLI entry point (`bin`): the composition root that wires
+  adapters into `UsageApp`. Consumes the public API from `index.ts`.
 
 Example output:
 

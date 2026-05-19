@@ -3,10 +3,21 @@
   "version": "2.0.0",
   "description": "Show your current Claude Code subscription usage limits",
   "type": "module",
-  "main": "dist/cli.js",
-  "bin": {
-    "claude-usage": "dist/cli.js"
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
   },
+  "bin": {
+    "claude-usage": "./dist/cli.js"
+  },
+  "sideEffects": [
+    "./dist/cli.js"
+  ],
   "files": [
     "dist"
   ],

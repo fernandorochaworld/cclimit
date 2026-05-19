@@ -1,9 +1,12 @@
 #!/usr/bin/env node
-import { AnthropicUsageProvider } from './adapters/anthropic-usage.js';
-import { KeychainCredentialsProvider } from './adapters/keychain-credentials.js';
-import { UsageApp } from './core/app.js';
-import type { UsageRenderer } from './core/types.js';
-import { JsonRenderer, PrettyRenderer } from './presentation/console-renderer.js';
+import {
+  AnthropicUsageProvider,
+  JsonRenderer,
+  KeychainCredentialsProvider,
+  PrettyRenderer,
+  UsageApp,
+  type UsageRenderer,
+} from './index.js';
 
 /** Composition root: picks an output renderer based on CLI flags. */
 function selectRenderer(argv: string[]): UsageRenderer {

@@ -12,7 +12,7 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "verbatimModuleSyntax": true,
-    "declaration": false,
+    "declaration": true,
     "sourceMap": false
   },
   "include": ["src"]
