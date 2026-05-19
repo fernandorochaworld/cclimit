@@ -1,7 +1,5 @@
-/make
 .docs
 .fast-coder
-Makefile
 node_modules
 dist
 CHANGELOG.md
