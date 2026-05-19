@@ -1,3 +1,5 @@
+import type { Painter } from '../shared/colors.js';
+import { stdoutColors as c } from '../shared/colors.js';
 import type {
   ExtraUsage,
   Usage,
@@ -18,6 +20,10 @@ const WINDOW_LABELS: Record<WindowKey, string> = {
 const BAR_WIDTH = 20;
 const LABEL_WIDTH = 22;
 
+/** Utilization thresholds (%) at which a window is tinted yellow / red. */
+const WARN_AT = 50;
+const DANGER_AT = 80;
+
 /** Driving adapter: renders the raw usage payload as pretty-printed JSON. */
 export class JsonRenderer implements UsageRenderer {
   render(usage: Usage): void {
@@ -25,10 +31,10 @@ export class JsonRenderer implements UsageRenderer {
   }
 }
 
-/** Driving adapter: renders usage windows as labelled progress bars. */
+/** Driving adapter: renders usage windows as labelled, colour-coded bars. */
 export class PrettyRenderer implements UsageRenderer {
   render(usage: Usage): void {
-    console.log('Claude Code usage limits\n');
+    console.log(`${c.bold('Claude Code usage limits')}\n`);
 
     for (const key of Object.keys(WINDOW_LABELS) as WindowKey[]) {
       const window = usage[key];
@@ -48,17 +54,25 @@ export class PrettyRenderer implements UsageRenderer {
         ? `${extra.monthly_limit} ${extra.currency ?? ''}`.trim()
         : 'n/a';
     console.log(
-      `\n  Extra usage enabled — used ${extra.used_credits ?? 0}, limit ${limit}`,
+      `\n  ${c.cyan('Extra usage enabled')} — used ${extra.used_credits ?? 0}, limit ${limit}`,
     );
   }
 }
 
 function formatWindow({ utilization, resets_at }: UsageWindow): string {
   const pct = Math.round(utilization ?? 0);
+  const tint = severityColor(pct);
   const reset = resets_at
     ? `resets ${new Date(resets_at).toLocaleString()}`
     : 'no reset scheduled';
-  return `${bar(pct)} ${String(pct).padStart(3)}%  (${reset})`;
+  return `${tint(bar(pct))} ${tint(`${String(pct).padStart(3)}%`)}  ${c.gray(`(${reset})`)}`;
+}
+
+/** Picks a colour by how close the window is to its limit. */
+function severityColor(pct: number): Painter {
+  if (pct >= DANGER_AT) return c.red;
+  if (pct >= WARN_AT) return c.yellow;
+  return c.green;
 }
 
 function bar(pct: number): string {

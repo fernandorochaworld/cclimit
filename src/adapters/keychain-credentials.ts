@@ -3,6 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { promisify } from 'node:util';
+import { CredentialsNotFoundError } from '../core/errors.js';
 import type { Credentials, CredentialsProvider } from '../core/types.js';
 
 const execFileAsync = promisify(execFile);
@@ -34,7 +35,7 @@ export class KeychainCredentialsProvider implements CredentialsProvider {
     const fromFile = await this.readFromFile();
     if (fromFile) return fromFile;
 
-    throw new Error(
+    throw new CredentialsNotFoundError(
       'Could not find Claude Code credentials. Make sure Claude Code is ' +
         'installed and you are logged in (run `claude` once).',
     );

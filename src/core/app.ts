@@ -1,3 +1,4 @@
+import { stderrColors as c } from '../shared/colors.js';
 import type {
   CredentialsProvider,
   UsageProvider,
@@ -19,7 +20,9 @@ export class UsageApp {
     const { accessToken, expiresAt } = await this.credentials.getCredentials();
 
     if (expiresAt && expiresAt < Date.now()) {
-      console.warn('⚠  Stored token looks expired; trying anyway...\n');
+      console.warn(
+        c.yellow('⚠  Stored token looks expired; trying anyway...') + '\n',
+      );
     }
 
     const usage = await this.usage.fetchUsage(accessToken);

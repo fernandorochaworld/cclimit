@@ -13,6 +13,15 @@ export { UsageApp } from './core/app.js';
 export { AnthropicUsageProvider } from './adapters/anthropic-usage.js';
 export { KeychainCredentialsProvider } from './adapters/keychain-credentials.js';
 export { JsonRenderer, PrettyRenderer } from './presentation/console-renderer.js';
+export {
+  AiLimitsError,
+  AuthenticationError,
+  CredentialsNotFoundError,
+  ErrorCode,
+  NetworkError,
+  UsageRequestError,
+  UsageResponseError,
+} from './core/errors.js';
 export type {
   Credentials,
   CredentialsProvider,

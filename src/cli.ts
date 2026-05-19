@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import {
+  AiLimitsError,
   AnthropicUsageProvider,
   JsonRenderer,
   KeychainCredentialsProvider,
@@ -7,6 +8,7 @@ import {
   UsageApp,
   type UsageRenderer,
 } from './index.js';
+import { stderrColors as c } from './shared/colors.js';
 
 /** Composition root: picks an output renderer based on CLI flags. */
 function selectRenderer(argv: string[]): UsageRenderer {
@@ -23,7 +25,12 @@ async function main(): Promise<void> {
 }
 
 main().catch((err: unknown) => {
-  const message = err instanceof Error ? err.message : String(err);
-  console.error(`Error: ${message}`);
+  if (err instanceof AiLimitsError) {
+    // Typed failure: surface the stable error code alongside the message.
+    console.error(c.red(`${c.bold(`Error [${err.code}]`)}: ${err.message}`));
+  } else {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(c.red(`${c.bold('Error')}: ${message}`));
+  }
   process.exit(1);
 });
