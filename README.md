@@ -6,9 +6,11 @@ Code's built-in `/usage` command.
 
 ## How it works
 
-1. Reads your Claude Code OAuth token from the macOS Keychain
-   (`Claude Code-credentials`), or from `~/.claude/.credentials.json` on other
-   platforms.
+1. Reads your Claude Code OAuth token from the OS credential store —
+   macOS Keychain or Windows Credential Manager (target
+   `Claude Code-credentials`) — and falls back to
+   `~/.claude/.credentials.json` (also `%APPDATA%\.claude\.credentials.json`
+   on Windows) when no OS store entry is present.
 2. Calls `GET https://api.anthropic.com/api/oauth/usage` — the endpoint Claude
    Code itself uses — and prints the utilization of each window.
 
