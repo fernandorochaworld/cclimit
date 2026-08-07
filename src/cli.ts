@@ -1,4 +1,6 @@
 #!/usr/bin/env node
+import { realpathSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
 import {
   AiLimitsError,
   AnthropicUsageProvider,
@@ -11,26 +13,48 @@ import {
 import { stderrColors as c } from './shared/colors.js';
 
 /** Composition root: picks an output renderer based on CLI flags. */
-function selectRenderer(argv: string[]): UsageRenderer {
+export function selectRenderer(argv: string[]): UsageRenderer {
   return argv.includes('--json') ? new JsonRenderer() : new PrettyRenderer();
 }
 
-async function main(): Promise<void> {
-  const app = new UsageApp(
-    new KeychainCredentialsProvider(),
-    new AnthropicUsageProvider(),
-    selectRenderer(process.argv.slice(2)),
-  );
-  await app.run();
-}
-
-main().catch((err: unknown) => {
+/** Pure mapping from a thrown value to the message printed on stderr. */
+export function formatError(err: unknown): string {
   if (err instanceof AiLimitsError) {
     // Typed failure: surface the stable error code alongside the message.
-    console.error(c.red(`${c.bold(`Error [${err.code}]`)}: ${err.message}`));
-  } else {
-    const message = err instanceof Error ? err.message : String(err);
-    console.error(c.red(`${c.bold('Error')}: ${message}`));
+    return c.red(`${c.bold(`Error [${err.code}]`)}: ${err.message}`);
   }
-  process.exit(1);
-});
+  const message = err instanceof Error ? err.message : String(err);
+  return c.red(`${c.bold('Error')}: ${message}`);
+}
+
+/** Runs the CLI and resolves with the process exit code (0 ok, 1 failure). */
+export async function run(argv: string[]): Promise<number> {
+  try {
+    const app = new UsageApp(
+      new KeychainCredentialsProvider(),
+      new AnthropicUsageProvider(),
+      selectRenderer(argv),
+    );
+    await app.run();
+    return 0;
+  } catch (err: unknown) {
+    console.error(formatError(err));
+    return 1;
+  }
+}
+
+/** True when this module is the process entry point (not merely imported). */
+function isEntryPoint(): boolean {
+  const invoked = process.argv[1];
+  if (!invoked) return false;
+  const self = fileURLToPath(import.meta.url);
+  try {
+    return realpathSync(invoked) === realpathSync(self);
+  } catch {
+    return invoked === self;
+  }
+}
+
+if (isEntryPoint()) {
+  run(process.argv.slice(2)).then((code) => process.exit(code));
+}

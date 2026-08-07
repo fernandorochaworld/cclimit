@@ -1,3 +1,5 @@
+2026-08-07 14:53 - Made the CLI unit-testable by extracting seams in `src/cli.ts`: exported `selectRenderer(argv)`, a pure `formatError(err)` and `run(argv)` returning the exit code instead of calling `process.exit`. The side-effectful tail is now guarded by an entry-point check (realpath of `process.argv[1]` vs `import.meta.url`), so importing the module in tests performs no credential read, no fetch and no exit. Observable CLI behaviour, output text, exit codes and the shebang are unchanged.
+
 # Changelog
 
 2026-08-07 10:47 - Evaluated step 1 of the unit-test suite plan (vitest harness). Re-ran and confirmed all acceptance criteria: `npm test` exits 0 with 1 passing test, `npm run test:cov` exits 0, prints the coverage table (rows for `src/**`) and writes `coverage/lcov.info`, `npm run build` exits 0 with no `*.spec.js` or `tests` directory under `dist/`, and `git status --porcelain` is clean after the coverage run. This step is infrastructure-only (no application behavior to test), so no additional tests or fix tasks were needed.
