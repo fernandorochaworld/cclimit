@@ -2,5 +2,6 @@
 .fast-coder
 node_modules
 dist
+coverage
 CHANGELOG.md
 .npmrc
