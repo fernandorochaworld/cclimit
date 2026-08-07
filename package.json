@@ -13,7 +13,7 @@
     "./package.json": "./package.json"
   },
   "bin": {
-    "ailimits": "./dist/cli.js"
+    "ailimits": "dist/cli.js"
   },
   "sideEffects": [
     "./dist/cli.js"
