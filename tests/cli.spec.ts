@@ -51,6 +51,12 @@ const USAGE: Usage = {
 /** Colour is TTY-dependent, so compare on the un-styled text. */
 const plain = (text: string): string => text.replace(/\x1b\[[0-9;]*m/g, '');
 
+/** Snapshot taken after the hoisted `../src/cli.js` import has run. */
+const callsAfterImport = {
+  getCredentials: getCredentials.mock.calls.length,
+  fetchUsage: fetchUsage.mock.calls.length,
+};
+
 beforeEach(() => {
   getCredentials.mockResolvedValue({ accessToken: 'token' });
   fetchUsage.mockResolvedValue(USAGE);
@@ -66,6 +72,10 @@ afterEach(() => {
 describe('module import', () => {
   it('has no side effects: process.exit is never called', () => {
     expect(exitCalls).toHaveLength(0);
+  });
+
+  it('has no side effects: no credential read and no usage fetch', () => {
+    expect(callsAfterImport).toEqual({ getCredentials: 0, fetchUsage: 0 });
   });
 });
 
