@@ -75,9 +75,24 @@ npm start              # pretty output
 npm run dev            # build + run in one step
 npm run lint           # type-aware ESLint over src/ and tests/
 npm run lint:fix       # same, auto-fixing what is fixable
+npm test               # run the Vitest suite once
 ```
 
-The `make lint` and `make lint-fix` targets delegate to those two scripts.
+The same flows are available through `make`, which is the recommended entry
+point:
+
+```sh
+make help              # list every available target
+make build             # compile src/ → dist/
+make run               # build, then run the CLI (make run-json for --json)
+make start             # run the already-built CLI without recompiling
+make lint              # type-aware ESLint (make lint-fix to auto-fix)
+make publish-check     # rehearse an npm publish without uploading
+make version-patch     # bump the patch version and tag it
+```
+
+Targets live in `make/*.mk`, one file per concern, and are included
+automatically.
 
 ## Architecture
 

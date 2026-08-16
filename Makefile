@@ -1,10 +1,14 @@
 # Root Makefile
 #
 # Sub-makefiles live in ./make and are grouped by concern:
-#   make/build.mk   compile / type-check / clean
-#   make/run.mk     run the CLI locally
+#   make/build.mk   compile, type-check, watch and clean the dist/ output
+#   make/run.mk     run the ailimits CLI locally
+#   make/lint.mk    report and auto-fix ESLint problems
 #   make/npm.mk     dependencies, versioning and publishing
 #   make/claude.mk  Claude Code helpers
+#
+# Every file matching make/*.mk is included automatically — adding a module
+# needs no edit here. See .docs/guidelines/make-targets.md for the conventions.
 #
 # Run `make` or `make help` to list every available target.
 
