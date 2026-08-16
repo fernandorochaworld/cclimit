@@ -1,0 +1,11 @@
+{
+  // Lint-only TS project: widens tsconfig.json to the files ESLint parses.
+  // Never emits, so rootDir/outDir carry no build meaning here.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowJs": true,
+    "rootDir": "."
+  },
+  "include": ["src", "tests", "*.ts", "eslint.config.js"]
+}

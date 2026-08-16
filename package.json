@@ -26,6 +26,8 @@
     "start": "node dist/cli.js",
     "dev": "tsc && node dist/cli.js",
     "prepare": "tsc",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix",
     "test": "vitest run",
     "test:watch": "vitest",
     "test:cov": "vitest run --coverage"
@@ -34,9 +36,13 @@
     "node": ">=20"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/node": "^22.10.0",
     "@vitest/coverage-v8": "^4.1.10",
+    "eslint": "^10.8.1",
+    "globals": "^17.11.0",
     "typescript": "^5.7.0",
+    "typescript-eslint": "^8.67.0",
     "vitest": "^4.1.10"
   },
   "license": "MIT"
