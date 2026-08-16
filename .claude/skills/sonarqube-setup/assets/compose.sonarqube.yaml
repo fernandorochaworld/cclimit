@@ -1,0 +1,47 @@
+# SonarQube (Community Build) + PostgreSQL, dropped in by the `sonarqube-setup` skill.
+# Run with the project key as the compose project name so the named volumes match
+# what the skill's `reset` operation deletes:
+#
+#   docker compose -p "$SONARQUBE_PROJECT_KEY" --profile dev up -d sonarqube sonarqube_db
+#
+# The compose project name also comes from `name:` below via .env interpolation, so a
+# bare `docker compose --profile dev up -d` works too when .env is present.
+name: ${SONARQUBE_PROJECT_KEY:-app}
+
+services:
+  sonarqube:
+    image: sonarqube:community
+    profiles: ['dev']
+    depends_on:
+      - sonarqube_db
+    ports:
+      - '9000:9000'
+    environment:
+      SONAR_JDBC_URL: jdbc:postgresql://sonarqube_db:5432/sonar
+      SONAR_JDBC_USERNAME: sonar
+      SONAR_JDBC_PASSWORD: sonar
+    # Elasticsearch inside SonarQube needs a bootstrap file-descriptor bump.
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - sonar_data:/opt/sonarqube/data
+      - sonar_logs:/opt/sonarqube/logs
+      - sonar_extensions:/opt/sonarqube/extensions
+
+  sonarqube_db:
+    image: postgres:15
+    profiles: ['dev']
+    environment:
+      POSTGRES_USER: sonar
+      POSTGRES_PASSWORD: sonar
+      POSTGRES_DB: sonar
+    volumes:
+      - sonar_db:/var/lib/postgresql/data
+
+volumes:
+  sonar_data:
+  sonar_logs:
+  sonar_extensions:
+  sonar_db:

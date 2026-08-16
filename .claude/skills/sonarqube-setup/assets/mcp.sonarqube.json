@@ -1,0 +1,23 @@
+{
+  "mcpServers": {
+    "sonarqube": {
+      "command": "docker",
+      "args": [
+        "run",
+        "--init",
+        "--rm",
+        "-i",
+        "--add-host=host.docker.internal:host-gateway",
+        "-e",
+        "SONARQUBE_TOKEN",
+        "-e",
+        "SONARQUBE_URL",
+        "sonarsource/sonarqube-mcp:1.22.0.3040"
+      ],
+      "env": {
+        "SONARQUBE_TOKEN": "${SONARQUBE_TOKEN}",
+        "SONARQUBE_URL": "http://host.docker.internal:9000"
+      }
+    }
+  }
+}
