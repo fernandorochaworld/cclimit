@@ -73,7 +73,11 @@ npm install            # install dev dependencies (TypeScript)
 npm run build          # compile src/ → dist/
 npm start              # pretty output
 npm run dev            # build + run in one step
+npm run lint           # type-aware ESLint over src/ and tests/
+npm run lint:fix       # same, auto-fixing what is fixable
 ```
+
+The `make lint` and `make lint-fix` targets delegate to those two scripts.
 
 ## Architecture
 
