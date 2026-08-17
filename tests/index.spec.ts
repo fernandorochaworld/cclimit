@@ -1,5 +1,9 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import type { Credentials, Usage } from '../src/core/types.js';
+import type {
+  Credentials,
+  CredentialsOptions,
+  Usage,
+} from '../src/core/types.js';
 
 /**
  * Hoisted so the adapter doubles exist before `../src/index.js` is imported —
@@ -7,7 +11,7 @@ import type { Credentials, Usage } from '../src/core/types.js';
  */
 const { credentialsCtor, usageCtor, getCredentials, fetchUsage } = vi.hoisted(
   () => ({
-    credentialsCtor: vi.fn(),
+    credentialsCtor: vi.fn<(options?: CredentialsOptions) => void>(),
     usageCtor: vi.fn(),
     getCredentials: vi.fn<() => Promise<Credentials>>(),
     fetchUsage: vi.fn<(token: string) => Promise<Usage>>(),
@@ -16,8 +20,8 @@ const { credentialsCtor, usageCtor, getCredentials, fetchUsage } = vi.hoisted(
 
 vi.mock('../src/adapters/keychain-credentials.js', () => ({
   KeychainCredentialsProvider: class {
-    constructor() {
-      credentialsCtor();
+    constructor(options?: CredentialsOptions) {
+      credentialsCtor(options);
     }
     getCredentials = getCredentials;
   },
@@ -76,6 +80,18 @@ describe('getUsage', () => {
 
     expect(fetchUsage).toHaveBeenCalledTimes(1);
     expect(fetchUsage).toHaveBeenCalledWith('secret-token');
+  });
+
+  it('forwards the configDir option to the credentials provider', async () => {
+    await lib.getUsage({ configDir: '/tmp/a' });
+
+    expect(credentialsCtor).toHaveBeenCalledWith({ configDir: '/tmp/a' });
+  });
+
+  it('constructs the credentials provider with no config dir by default', async () => {
+    await lib.getUsage();
+
+    expect(credentialsCtor).toHaveBeenCalledWith(undefined);
   });
 
   it('propagates a credentials failure without logging or exiting', async () => {

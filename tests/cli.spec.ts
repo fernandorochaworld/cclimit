@@ -1,33 +1,47 @@
 import { fileURLToPath } from 'node:url';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { formatError, run, selectRenderer } from '../src/cli.js';
+import {
+  formatError,
+  run,
+  selectConfigDir,
+  selectRenderer,
+} from '../src/cli.js';
 import {
   CredentialsNotFoundError,
   JsonRenderer,
   NetworkError,
   PrettyRenderer,
 } from '../src/index.js';
-import type { Credentials, Usage } from '../src/core/types.js';
+import type {
+  Credentials,
+  CredentialsOptions,
+  Usage,
+} from '../src/core/types.js';
 
 /**
  * Hoisted so the guard and the adapter stubs exist before `../src/cli.js`
  * is imported — importing the module must not run anything.
  */
-const { exitCalls, installExitGuard, getCredentials, fetchUsage } = vi.hoisted(
-  () => {
-    const calls: unknown[] = [];
-    return {
-      exitCalls: calls,
-      installExitGuard: () =>
-        vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
-          calls.push(code);
-          throw new Error(`process.exit(${String(code)}) was called`);
-        }) as never),
-      getCredentials: vi.fn<() => Promise<Credentials>>(),
-      fetchUsage: vi.fn<() => Promise<Usage>>(),
-    };
-  },
-);
+const {
+  exitCalls,
+  installExitGuard,
+  credentialsCtor,
+  getCredentials,
+  fetchUsage,
+} = vi.hoisted(() => {
+  const calls: unknown[] = [];
+  return {
+    exitCalls: calls,
+    installExitGuard: () =>
+      vi.spyOn(process, 'exit').mockImplementation(((code?: number) => {
+        calls.push(code);
+        throw new Error(`process.exit(${String(code)}) was called`);
+      }) as never),
+    credentialsCtor: vi.fn<(options?: CredentialsOptions) => void>(),
+    getCredentials: vi.fn<() => Promise<Credentials>>(),
+    fetchUsage: vi.fn<() => Promise<Usage>>(),
+  };
+});
 
 installExitGuard();
 
@@ -36,6 +50,9 @@ vi.mock('../src/index.js', async (importOriginal) => {
   return {
     ...actual,
     KeychainCredentialsProvider: class {
+      constructor(options?: CredentialsOptions) {
+        credentialsCtor(options);
+      }
       getCredentials = getCredentials;
     },
     AnthropicUsageProvider: class {
@@ -136,6 +153,32 @@ describe('selectRenderer', () => {
   });
 });
 
+describe('selectConfigDir', () => {
+  it('reads the space-separated form', () => {
+    expect(selectConfigDir(['--config-dir', '/tmp/a'])).toBe('/tmp/a');
+  });
+
+  it('reads the = form', () => {
+    expect(selectConfigDir(['--config-dir=/tmp/a'])).toBe('/tmp/a');
+  });
+
+  it('returns undefined when the flag is absent', () => {
+    expect(selectConfigDir(['--json'])).toBeUndefined();
+  });
+
+  it('returns undefined when the flag has no value', () => {
+    expect(selectConfigDir(['--config-dir'])).toBeUndefined();
+  });
+
+  it('does not consume a following flag as the path', () => {
+    expect(selectConfigDir(['--config-dir', '--json'])).toBeUndefined();
+  });
+
+  it('lets the last occurrence win', () => {
+    expect(selectConfigDir(['--config-dir=/a', '--config-dir=/b'])).toBe('/b');
+  });
+});
+
 describe('formatError', () => {
   it('surfaces the error code for a typed AiLimitsError', () => {
     const out = formatError(new CredentialsNotFoundError('m'));
@@ -164,6 +207,22 @@ describe('run', () => {
 
     expect(log.mock.calls.length).toBeGreaterThan(0);
     expect(exitCalls).toHaveLength(0);
+  });
+
+  it('passes the --config-dir path to the credentials provider', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await expect(run(['--config-dir', '/tmp/a', '--json'])).resolves.toBe(0);
+
+    expect(credentialsCtor).toHaveBeenCalledWith({ configDir: '/tmp/a' });
+  });
+
+  it('passes no config dir when the flag is absent', async () => {
+    vi.spyOn(console, 'log').mockImplementation(() => {});
+
+    await expect(run([])).resolves.toBe(0);
+
+    expect(credentialsCtor).toHaveBeenCalledWith({ configDir: undefined });
   });
 
   it('resolves 1 and reports the code when credentials cannot be read', async () => {

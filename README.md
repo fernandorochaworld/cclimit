@@ -27,9 +27,42 @@ No credentials are stored or transmitted anywhere except to Anthropic's API.
 npx ailimits          # one-off, no install
 npx ailimits --json   # raw JSON from the API
 
+# read credentials from a specific Claude Code config directory
+npx ailimits --config-dir ~/work/.claude
+
 npm install -g ailimits   # or install the `ailimits` command
 ailimits
 ailimits --json
+```
+
+## Choosing the config directory
+
+By default the credentials are looked up in the OS store and then in
+`~/.claude/.credentials.json` (`%APPDATA%\.claude\.credentials.json` on
+Windows). Point the tool at a different Claude Code config directory — a
+second account, a container mount, a checked-out profile — in one of two
+ways. Precedence, highest first:
+
+1. `--config-dir <path>` (CLI) or `{ configDir }` (library)
+2. the `CLAUDE_CONFIG_DIR` environment variable, which Claude Code itself
+   honours
+3. the default location: `~/.claude` (`%APPDATA%\.claude` on Windows)
+
+When a config directory is set by either of the first two, only
+`<dir>/.credentials.json` is read — the macOS Keychain and the Windows
+Credential Manager are skipped, so an explicitly chosen directory cannot be
+overridden by a token belonging to another account. A leading `~/` is
+expanded to your home directory.
+
+```sh
+ailimits --config-dir ~/work/.claude       # or --config-dir=~/work/.claude
+CLAUDE_CONFIG_DIR=~/work/.claude ailimits  # same, via the environment
+```
+
+```ts
+import { getUsage } from 'ailimits';
+
+const usage = await getUsage({ configDir: '~/work/.claude' });
 ```
 
 ## Use as a dependency
