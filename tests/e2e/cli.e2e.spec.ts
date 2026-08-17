@@ -50,9 +50,9 @@ function cliEnv(extra: Record<string, string> = {}): NodeJS.ProcessEnv {
 }
 
 /** Runs the compiled CLI with stdout/stderr piped (i.e. redirected). */
-function runCli(env: NodeJS.ProcessEnv): Promise<CliResult> {
+function runCli(env: NodeJS.ProcessEnv, args: string[] = []): Promise<CliResult> {
   return new Promise((resolve, reject) => {
-    const child = spawn(process.execPath, [CLI], {
+    const child = spawn(process.execPath, [CLI, ...args], {
       cwd: sandbox,
       env,
       stdio: ['ignore', 'pipe', 'pipe'],
@@ -121,5 +121,61 @@ describe('compiled CLI with no credentials available', () => {
 
     expect(result.stderr).not.toContain('\x1b');
     expect(result.stderr).toContain('CREDENTIALS_NOT_FOUND');
+  });
+});
+
+/**
+ * The config directory is the one control a user drives from the command
+ * line, so these cases assert on the compiled binary that the flag actually
+ * changes which directory is read — the resolved path is echoed back in the
+ * error, never a placeholder — and that it outranks `CLAUDE_CONFIG_DIR`.
+ */
+describe('compiled CLI with an explicit config directory', () => {
+  it('reads the directory given by --config-dir and names it in the error', async () => {
+    const dir = join(sandbox, 'flag-dir');
+    const result = await runCli(cliEnv(), ['--config-dir', dir]);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain('Error [CREDENTIALS_NOT_FOUND]');
+    expect(result.stderr).toContain(dir);
+  });
+
+  it('accepts the --config-dir=<path> form alongside --json', async () => {
+    const dir = join(sandbox, 'eq-dir');
+    const result = await runCli(cliEnv(), ['--json', `--config-dir=${dir}`]);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain(dir);
+  });
+
+  it('lets --config-dir win over CLAUDE_CONFIG_DIR', async () => {
+    const envDir = join(sandbox, 'env-dir');
+    const flagDir = join(sandbox, 'win-dir');
+    const result = await runCli(cliEnv({ CLAUDE_CONFIG_DIR: envDir }), [
+      '--config-dir',
+      flagDir,
+    ]);
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain(flagDir);
+    expect(result.stderr).not.toContain(envDir);
+  });
+
+  it('falls back to CLAUDE_CONFIG_DIR when no flag is given', async () => {
+    const envDir = join(sandbox, 'env-only-dir');
+    const result = await runCli(cliEnv({ CLAUDE_CONFIG_DIR: envDir }));
+
+    expect(result.code).toBe(1);
+    expect(result.stderr).toContain(envDir);
+  });
+
+  it('does not swallow --json as the path when --config-dir has no value', async () => {
+    const result = await runCli(cliEnv(), ['--config-dir', '--json']);
+
+    expect(result.code).toBe(1);
+    // Default resolution ran instead: the message carries no directory.
+    expect(result.stderr).toContain('Error [CREDENTIALS_NOT_FOUND]');
+    expect(result.stderr).not.toContain('--json');
+    expect(result.stderr).toContain('installed and you are logged in');
   });
 });
