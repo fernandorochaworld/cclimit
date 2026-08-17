@@ -39,6 +39,16 @@ export interface Credentials {
   scopes?: string[];
 }
 
+/** Options controlling where Claude Code credentials are read from. */
+export interface CredentialsOptions {
+  /**
+   * Claude Code config directory holding `.credentials.json`. Overrides
+   * the `CLAUDE_CONFIG_DIR` environment variable and, when set, bypasses
+   * the OS credential stores.
+   */
+  configDir?: string;
+}
+
 /** Port: a source of Claude Code OAuth credentials. */
 export interface CredentialsProvider {
   getCredentials(): Promise<Credentials>;

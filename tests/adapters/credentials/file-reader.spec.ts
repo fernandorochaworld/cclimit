@@ -109,4 +109,65 @@ describe('readFromFile', () => {
 
     await expect(readFromFile()).resolves.toBeNull();
   });
+
+  it('probes only <configDir>/.credentials.json when a config dir is given', async () => {
+    setPlatform('linux');
+    readFileMock.mockResolvedValue(blob);
+
+    await expect(readFromFile('/tmp/cfg')).resolves.toEqual({
+      accessToken: 'file-token',
+      expiresAt: 42,
+      scopes: ['s'],
+    });
+    expect(readFileMock).toHaveBeenCalledTimes(1);
+    expect(readFileMock).toHaveBeenCalledWith(
+      join('/tmp/cfg', '.credentials.json'),
+      'utf8',
+    );
+  });
+
+  it('ignores %APPDATA% on win32 when a config dir is given', async () => {
+    setPlatform('win32');
+    process.env['APPDATA'] = join('/c', 'Users', 'tester', 'AppData');
+    readFileMock.mockResolvedValue(blob);
+
+    await expect(readFromFile('/tmp/cfg')).resolves.toEqual({
+      accessToken: 'file-token',
+      expiresAt: 42,
+      scopes: ['s'],
+    });
+    expect(readFileMock).toHaveBeenCalledTimes(1);
+    expect(readFileMock).toHaveBeenCalledWith(
+      join('/tmp/cfg', '.credentials.json'),
+      'utf8',
+    );
+  });
+
+  it('does not fall back to the defaults when the config dir file misses', async () => {
+    setPlatform('win32');
+    process.env['APPDATA'] = join('/c', 'AppData');
+    readFileMock.mockRejectedValue(new Error('ENOENT'));
+
+    await expect(readFromFile('/tmp/cfg')).resolves.toBeNull();
+    expect(readFileMock).toHaveBeenCalledTimes(1);
+  });
+
+  it('returns null when the config dir file holds no OAuth block', async () => {
+    setPlatform('linux');
+    readFileMock.mockResolvedValue('{"other":true}');
+
+    await expect(readFromFile('/tmp/cfg')).resolves.toBeNull();
+  });
+
+  it('uses the default candidates when the config dir is null or undefined', async () => {
+    setPlatform('linux');
+    readFileMock.mockResolvedValue(blob);
+
+    await expect(readFromFile(null)).resolves.toEqual({
+      accessToken: 'file-token',
+      expiresAt: 42,
+      scopes: ['s'],
+    });
+    expect(readFileMock).toHaveBeenCalledWith(HOME_PATH, 'utf8');
+  });
 });
