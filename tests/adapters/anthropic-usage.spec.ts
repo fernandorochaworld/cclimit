@@ -50,7 +50,7 @@ async function captureError(promise: Promise<unknown>): Promise<unknown> {
 }
 
 beforeEach(() => {
-  globalThis.fetch = fetchMock as unknown as typeof fetch;
+  globalThis.fetch = fetchMock;
 });
 
 afterEach(() => {

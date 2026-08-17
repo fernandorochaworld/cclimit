@@ -36,6 +36,7 @@ function colorFor(utilization: number): string {
   lines = [];
   new PrettyRenderer().render(usage);
   const line = lines[1];
+  // eslint-disable-next-line no-control-regex -- stripping ANSI needs the ESC char
   const match = /\x1b\[(3[123])m/.exec(line);
   return match ? `\x1b[${match[1]}m` : '';
 }

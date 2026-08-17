@@ -79,5 +79,5 @@ function isEntryPoint(): boolean {
 }
 
 if (isEntryPoint()) {
-  run(process.argv.slice(2)).then((code) => process.exit(code));
+  void run(process.argv.slice(2)).then((code) => process.exit(code));
 }

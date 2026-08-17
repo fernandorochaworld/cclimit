@@ -12,10 +12,12 @@ const TOKEN = 'access-token-123';
 const USAGE: Usage = { five_hour: { utilization: 42, resets_at: null } };
 
 function makeApp(credentials: { accessToken: string; expiresAt?: number }) {
-  const getCredentials = vi.fn<CredentialsProvider['getCredentials']>(
-    async () => credentials,
+  const getCredentials = vi.fn<CredentialsProvider['getCredentials']>(() =>
+    Promise.resolve(credentials),
   );
-  const fetchUsage = vi.fn<UsageProvider['fetchUsage']>(async () => USAGE);
+  const fetchUsage = vi.fn<UsageProvider['fetchUsage']>(() =>
+    Promise.resolve(USAGE),
+  );
   const render = vi.fn<UsageRenderer['render']>();
 
   const app = new UsageApp(

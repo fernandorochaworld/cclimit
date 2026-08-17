@@ -66,6 +66,7 @@ const USAGE: Usage = {
 };
 
 /** Colour is TTY-dependent, so compare on the un-styled text. */
+// eslint-disable-next-line no-control-regex -- stripping ANSI needs the ESC char
 const plain = (text: string): string => text.replace(/\x1b\[[0-9;]*m/g, '');
 
 /** Snapshot taken after the hoisted `../src/cli.js` import has run. */

@@ -19,6 +19,7 @@ describe('parseOauth', () => {
   });
 
   it('strips a leading UTF-8 BOM', () => {
+    // eslint-disable-next-line no-irregular-whitespace -- the BOM is the fixture
     expect(parseOauth(`﻿${blob}`)?.accessToken).toBe('sk-ant-oat-token');
   });
 

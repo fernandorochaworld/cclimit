@@ -54,7 +54,9 @@ describe('dist/cli.js as the process entry point', () => {
     const { code, stdout, stderr } = await runCli(['--json']);
 
     if (code === 0) {
-      expect(() => JSON.parse(stdout)).not.toThrow();
+      expect(() => {
+        JSON.parse(stdout);
+      }).not.toThrow();
     } else {
       // No credentials / no network here: still proves the entry ran.
       expect(stderr).toContain('Error');

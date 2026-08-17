@@ -42,7 +42,7 @@ afterEach(() => {
 describe('readFromFile', () => {
   it('returns credentials when the home file holds a valid blob', async () => {
     setPlatform('linux');
-    readFileMock.mockResolvedValue(blob as never);
+    readFileMock.mockResolvedValue(blob);
 
     await expect(readFromFile()).resolves.toEqual({
       accessToken: 'file-token',
@@ -56,13 +56,13 @@ describe('readFromFile', () => {
     setPlatform('win32');
     process.env['APPDATA'] = join('/c', 'Users', 'tester', 'AppData');
     const appDataPath = join(
-      process.env['APPDATA'] as string,
+      process.env['APPDATA'],
       '.claude',
       '.credentials.json',
     );
     readFileMock
       .mockRejectedValueOnce(new Error('ENOENT'))
-      .mockResolvedValueOnce(blob as never);
+      .mockResolvedValueOnce(blob);
 
     await expect(readFromFile()).resolves.toEqual({
       accessToken: 'file-token',
@@ -105,7 +105,7 @@ describe('readFromFile', () => {
 
   it('returns null when the file parses to no OAuth block', async () => {
     setPlatform('linux');
-    readFileMock.mockResolvedValue('{"other":true}' as never);
+    readFileMock.mockResolvedValue('{"other":true}');
 
     await expect(readFromFile()).resolves.toBeNull();
   });
