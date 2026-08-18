@@ -1,6 +1,6 @@
 {
   "name": "ailimits",
-  "version": "0.3.0",
+  "version": "0.4.0",
   "description": "Show your current Claude Code subscription usage limits",
   "type": "module",
   "main": "./dist/index.js",
