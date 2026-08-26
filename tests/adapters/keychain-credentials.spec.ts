@@ -115,8 +115,23 @@ describe('KeychainCredentialsProvider', () => {
     ).resolves.toEqual(expired);
   });
 
-  it('bypasses the Keychain on darwin when a config dir is given', async () => {
+  it('reads the config-dir-scoped Keychain entry on darwin before the file', async () => {
     setPlatform('darwin');
+    keychainReader.mockResolvedValue(storeCreds);
+
+    await expect(
+      new KeychainCredentialsProvider({
+        configDir: '/tmp/cfg',
+      }).getCredentials(),
+    ).resolves.toEqual(storeCreds);
+    expect(keychainReader).toHaveBeenCalledTimes(1);
+    expect(keychainReader).toHaveBeenCalledWith('/tmp/cfg');
+    expect(fileReader).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the file when the scoped darwin Keychain entry misses', async () => {
+    setPlatform('darwin');
+    keychainReader.mockResolvedValue(null);
     fileReader.mockResolvedValue(fileCreds);
 
     await expect(
@@ -124,13 +139,29 @@ describe('KeychainCredentialsProvider', () => {
         configDir: '/tmp/cfg',
       }).getCredentials(),
     ).resolves.toEqual(fileCreds);
-    expect(keychainReader).toHaveBeenCalledTimes(0);
+    expect(keychainReader).toHaveBeenCalledTimes(1);
+    expect(keychainReader).toHaveBeenCalledWith('/tmp/cfg');
     expect(fileReader).toHaveBeenCalledTimes(1);
     expect(fileReader).toHaveBeenCalledWith('/tmp/cfg');
   });
 
-  it('bypasses the Windows store when a config dir is given', async () => {
+  it('reads the config-dir-scoped Credential Manager entry on win32 before the file', async () => {
     setPlatform('win32');
+    wincredReader.mockResolvedValue(storeCreds);
+
+    await expect(
+      new KeychainCredentialsProvider({
+        configDir: '/tmp/cfg',
+      }).getCredentials(),
+    ).resolves.toEqual(storeCreds);
+    expect(wincredReader).toHaveBeenCalledTimes(1);
+    expect(wincredReader).toHaveBeenCalledWith('/tmp/cfg');
+    expect(fileReader).not.toHaveBeenCalled();
+  });
+
+  it('falls back to the file when the scoped Windows store entry misses', async () => {
+    setPlatform('win32');
+    wincredReader.mockResolvedValue(null);
     fileReader.mockResolvedValue(fileCreds);
 
     await expect(
@@ -138,20 +169,38 @@ describe('KeychainCredentialsProvider', () => {
         configDir: '/tmp/cfg',
       }).getCredentials(),
     ).resolves.toEqual(fileCreds);
-    expect(wincredReader).toHaveBeenCalledTimes(0);
+    expect(wincredReader).toHaveBeenCalledTimes(1);
     expect(fileReader).toHaveBeenCalledTimes(1);
     expect(fileReader).toHaveBeenCalledWith('/tmp/cfg');
+  });
+
+  it('never falls back to another directory or the unscoped default entry', async () => {
+    setPlatform('darwin');
+    // The scoped reader itself decides which entry to read — this asserts
+    // the provider never calls the *unscoped* store (no arguments) once a
+    // config dir is set, which would leak another account's token.
+    keychainReader.mockResolvedValue(null);
+    fileReader.mockResolvedValue(fileCreds);
+
+    await new KeychainCredentialsProvider({
+      configDir: '/tmp/cfg',
+    }).getCredentials();
+
+    expect(keychainReader).not.toHaveBeenCalledWith();
+    expect(keychainReader).toHaveBeenCalledWith('/tmp/cfg');
   });
 
   it('uses CLAUDE_CONFIG_DIR when no constructor option is given', async () => {
     setPlatform('darwin');
     process.env['CLAUDE_CONFIG_DIR'] = '/tmp/env';
+    keychainReader.mockResolvedValue(null);
     fileReader.mockResolvedValue(fileCreds);
 
     await expect(
       new KeychainCredentialsProvider().getCredentials(),
     ).resolves.toEqual(fileCreds);
-    expect(keychainReader).toHaveBeenCalledTimes(0);
+    expect(keychainReader).toHaveBeenCalledTimes(1);
+    expect(keychainReader).toHaveBeenCalledWith('/tmp/env');
     expect(fileReader).toHaveBeenCalledWith('/tmp/env');
   });
 
@@ -169,6 +218,7 @@ describe('KeychainCredentialsProvider', () => {
 
   it('names the config dir in the error when it holds no credentials', async () => {
     setPlatform('darwin');
+    keychainReader.mockResolvedValue(null);
     fileReader.mockResolvedValue(null);
 
     const error = await new KeychainCredentialsProvider({
@@ -182,7 +232,7 @@ describe('KeychainCredentialsProvider', () => {
     expect((error as CredentialsNotFoundError).code).toBe(
       ErrorCode.CredentialsNotFound,
     );
-    expect(keychainReader).toHaveBeenCalledTimes(0);
+    expect(keychainReader).toHaveBeenCalledWith('/tmp/cfg');
   });
 
   it('keeps the default candidates when the config dir is blank', async () => {

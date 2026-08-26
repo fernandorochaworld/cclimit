@@ -67,4 +67,26 @@ describe('readFromKeychain', () => {
     await expect(readFromKeychain()).resolves.toBeNull();
     expect(execFileAsyncMock).toHaveBeenCalledTimes(1);
   });
+
+  it('reads the config-dir-scoped entry when a config dir is given', async () => {
+    setPlatform('darwin');
+    execFileAsyncMock.mockResolvedValue({
+      stdout: JSON.stringify({
+        claudeAiOauth: { accessToken: 'scoped-token' },
+      }),
+      stderr: '',
+    });
+
+    await expect(readFromKeychain('/tmp/work-profile')).resolves.toEqual({
+      accessToken: 'scoped-token',
+      expiresAt: undefined,
+      scopes: undefined,
+    });
+    expect(execFileAsyncMock).toHaveBeenCalledWith('security', [
+      'find-generic-password',
+      '-s',
+      'Claude Code-credentials-daf0411e',
+      '-w',
+    ]);
+  });
 });

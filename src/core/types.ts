@@ -42,9 +42,15 @@ export interface Credentials {
 /** Options controlling where Claude Code credentials are read from. */
 export interface CredentialsOptions {
   /**
-   * Claude Code config directory holding `.credentials.json`. Overrides
-   * the `CLAUDE_CONFIG_DIR` environment variable and, when set, bypasses
-   * the OS credential stores.
+   * Claude Code config directory to read credentials from — a different
+   * account, a container mount, a checked-out profile. Overrides the
+   * `CLAUDE_CONFIG_DIR` environment variable. Credentials are looked up
+   * scoped to this directory only: the OS credential store entry Claude
+   * Code itself scopes to it (macOS Keychain / Windows Credential
+   * Manager), then `<configDir>/.credentials.json`. Neither the default
+   * profile's OS store entry nor any other directory's file is ever
+   * consulted, so switching accounts is a single-parameter change with no
+   * risk of picking up another account's token.
    */
   configDir?: string;
 }

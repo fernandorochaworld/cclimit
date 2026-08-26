@@ -8,7 +8,8 @@ Code's built-in `/usage` command.
 
 1. Reads your Claude Code OAuth token from the OS credential store —
    macOS Keychain or Windows Credential Manager (target
-   `Claude Code-credentials`) — and falls back to
+   `Claude Code-credentials`, or `Claude Code-credentials-<hash>` when
+   reading a non-default config directory — see below) — and falls back to
    `~/.claude/.credentials.json` (also `%APPDATA%\.claude\.credentials.json`
    on Windows) when no OS store entry is present.
 2. Calls `GET https://api.anthropic.com/api/oauth/usage` — the endpoint Claude
@@ -48,11 +49,18 @@ ways. Precedence, highest first:
    honours
 3. the default location: `~/.claude` (`%APPDATA%\.claude` on Windows)
 
-When a config directory is set by either of the first two, only
-`<dir>/.credentials.json` is read — the macOS Keychain and the Windows
-Credential Manager are skipped, so an explicitly chosen directory cannot be
-overridden by a token belonging to another account. A leading `~/` is
-expanded to your home directory.
+When a config directory is set by either of the first two, the lookup runs
+scoped to it: on macOS/Windows, the OS store entry Claude Code itself scopes
+to that directory (`Claude Code-credentials-<hash>`, where `<hash>` is the
+first 8 hex characters of the SHA-256 digest of the directory's resolved
+path — the same scheme Claude Code uses, since it stores credentials for
+every profile in the OS store, never as a file) is tried first, then
+`<dir>/.credentials.json`. Neither the default profile's OS store entry nor
+any other directory's file is ever consulted, so an explicitly chosen
+directory cannot be overridden by a token belonging to another account —
+switching accounts is a single `--config-dir`/`CLAUDE_CONFIG_DIR` change,
+nothing else to configure. A leading `~/` is expanded to your home
+directory.
 
 ```sh
 ailimits --config-dir ~/work/.claude       # or --config-dir=~/work/.claude

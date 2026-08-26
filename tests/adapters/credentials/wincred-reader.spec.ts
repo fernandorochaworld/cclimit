@@ -76,4 +76,31 @@ describe('readFromWindowsCredentialManager', () => {
     await expect(readFromWindowsCredentialManager()).resolves.toBeNull();
     expect(execFileAsyncMock).toHaveBeenCalledTimes(1);
   });
+
+  it('embeds the config-dir-scoped target when a config dir is given', async () => {
+    setPlatform('win32');
+    execFileAsyncMock.mockResolvedValue({
+      stdout: JSON.stringify({
+        claudeAiOauth: { accessToken: 'scoped-win-token' },
+      }),
+      stderr: '',
+    });
+
+    await expect(
+      readFromWindowsCredentialManager('/tmp/work-profile'),
+    ).resolves.toEqual({
+      accessToken: 'scoped-win-token',
+      expiresAt: undefined,
+      scopes: undefined,
+    });
+
+    const [, args] = execFileAsyncMock.mock.calls[0] as [string, string[]];
+    const encodedIndex = args.indexOf('-EncodedCommand');
+    const script = Buffer.from(
+      args[encodedIndex + 1] as string,
+      'base64',
+    ).toString('utf16le');
+    expect(script).toContain('Claude Code-credentials-daf0411e');
+    expect(script).not.toContain("Read('Claude Code-credentials')");
+  });
 });

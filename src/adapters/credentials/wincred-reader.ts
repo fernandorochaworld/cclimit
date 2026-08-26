@@ -1,16 +1,15 @@
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import type { Credentials } from '../../core/types.js';
+import { keychainServiceName } from './keychain-scope.js';
 import { parseOauth } from './parse.js';
 
 const execFileAsync = promisify(execFile);
 
-const WINCRED_TARGET = 'Claude Code-credentials';
-
 /**
- * PowerShell program that calls the Win32 `CredReadW` API to retrieve
- * the Claude Code credential blob from the Windows Credential Manager
- * and writes the password to stdout.
+ * Builds the PowerShell program that calls the Win32 `CredReadW` API to
+ * retrieve the Claude Code credential blob identified by `target` from the
+ * Windows Credential Manager and writes the password to stdout.
  *
  * The CREDENTIAL struct is declared in C# so the marshaller handles
  * 32/64-bit pointer padding for us. The blob is stored as UTF-16 LE
@@ -19,8 +18,13 @@ const WINCRED_TARGET = 'Claude Code-credentials';
  * The blob bytes themselves are written to stdout (no `Write-Host`
  * which would add a newline/encoding conversion); the JSON parser
  * tolerates any trailing whitespace.
+ *
+ * `target` only ever holds `keychainServiceName`'s output — a fixed
+ * prefix plus, at most, 8 hex digits — so no further escaping is needed
+ * to embed it in the single-quoted PowerShell string literal below.
  */
-const POWERSHELL_SCRIPT = `
+function buildScript(target: string): string {
+  return `
 $ErrorActionPreference = 'Stop'
 $source = @'
 using System;
@@ -69,10 +73,11 @@ public static class AiLimitsCred {
 }
 '@
 Add-Type -TypeDefinition $source -Language CSharp | Out-Null
-$result = [AiLimitsCred]::Read('${WINCRED_TARGET}')
+$result = [AiLimitsCred]::Read('${target}')
 if ($null -eq $result) { exit 2 }
 [Console]::Out.Write($result)
 `;
+}
 
 /**
  * `powershell.exe -EncodedCommand` expects a base64-encoded UTF-16 LE
@@ -91,10 +96,14 @@ function encodeCommand(script: string): string {
  * stores its OAuth credential blob in the Generic Credential store under
  * the target name "Claude Code-credentials" (the same naming scheme it
  * uses for the macOS Keychain entry).
+ *
+ * @param configDir When given, reads the Credential Manager entry Claude
+ * Code scopes to this config directory instead of the default profile's
+ * entry — see {@link keychainServiceName}.
  */
-export async function readFromWindowsCredentialManager(): Promise<
-  Credentials | null
-> {
+export async function readFromWindowsCredentialManager(
+  configDir?: string | null,
+): Promise<Credentials | null> {
   if (process.platform !== 'win32') return null;
   try {
     const { stdout } = await execFileAsync(
@@ -107,7 +116,7 @@ export async function readFromWindowsCredentialManager(): Promise<
         '-OutputFormat',
         'Text',
         '-EncodedCommand',
-        encodeCommand(POWERSHELL_SCRIPT),
+        encodeCommand(buildScript(keychainServiceName(configDir))),
       ],
       { windowsHide: true, maxBuffer: 1024 * 1024 },
     );
